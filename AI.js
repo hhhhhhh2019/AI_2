@@ -37,7 +37,6 @@ function correct_weights(l0, l1, w, k) {
     for (let j = 0; j < w[i].length-1; j++) {
       w[i][j] += k * l1[i][1] * l0[j][0];
     }
-    w[i][w[i].length-1] += k * l1[i][0] * 1;
   }
 }
 
@@ -72,7 +71,7 @@ function learn(lays, weights, ld, iters, koof) {
 }
 
 function run(lays, weights, data) {
-  for (let i = 0; i < lays[0][i].length-1; i++) {
+  for (let i = 0; i < lays[0].length-1; i++) {
     lays[0][i][0] = data[i];
   }
   
@@ -89,13 +88,38 @@ function run(lays, weights, data) {
 }
 
 
-function get_error(lays) {
-  let res = 0;
-  for (let i of lays) {
-    for (let j of i) {
-        res += Math.abs(j[1]);
+class NeuralNetwork {
+  constructor(nc) {
+    this.lays = [];
+    for (let i of nc) {
+      let l = [];
+      for (let j = 0; j < i; j++) {
+        l.push([0, 0]);
+      }
+      this.lays.push(l);
+    }
+      [
+        [[]]
+      ]
+    this.weights = [];
+    for (let i = 1; i < nc.length; i++) {
+      let _w = [];
+      for (let j = 0; j < nc[i]; j++) {
+        let a = [];
+        for (let k = 0; k < nc[i-1]; k++) {
+            a.push(Math.random());
+        }
+        _w.push(a);
+      }
+      this.weights.push(_w);
     }
   }
 
-  return res;
+  run(data) {
+    return run(this.lays, this.weights, data);
+  }
+
+  learn(ld, k=null, i=null) {
+    learn(this.lays, this.weights, ld, i, k);
+  }
 }

@@ -16,16 +16,16 @@
 
 	<body>
 		<canvas width='300' height='300' id='cnv' onmousedown="on_mouse_down(event)" onmouseup="on_mouse_up(event)" onmousemove="on_mouse_move(event)"></canvas>
-		<button onclick="happy()">happy</button>
-		<button onclick="sad()">sad</button>
-		<button onclick="tr()">train</button>
-		<button onclick="r()">run</button>
+		<button onclick="happy()">веселый</button>
+		<button onclick="sad()">грустный</button>
+		<button onclick="tr()">обучить</button>
+		<button onclick="r()">запуск</button>
 		<script type="text/javascript">
 			var cnv = document.getElementById('cnv');
 			var ctx = cnv.getContext('2d');
 
-			var w = 15;
-			var h = 15;
+			var w = 30;
+			var h = 30;
 
 			var cw = cnv.width / w;
 			var ch = cnv.width / h;
@@ -34,6 +34,9 @@
 
 			var image = [];
 
+			var h_s = 0;
+			var s_s = 0;
+
 			var cl = false;
 
 			for (let i = 0; i < w * h; i++) {
@@ -41,7 +44,7 @@
 			}
 
 			function rast(x, y) {
-				return [Math.round(x / cw), Math.round(y / ch)];
+				return [Math.max(0, Math.round(x / cw)), Math.max(0, Math.round(y / ch))];
 			}
 
 			function on_mouse_down(e) {
@@ -87,49 +90,51 @@
 			}
 
 
-			let lays = [[], [[0,0],[0,0],[0,0],[0,0],[0,0]], [[0,0]]];
-			for (let i = 0; i < w*h; i++) {
-				lays[0].push([0,0]);
-			}
+			let n = new NeuralNetwork([w*h, 10, 5, 1]);
 
-			let weights = [[], [[Math.random(), Math.random(), Math.random(), Math.random(), Math.random(), Math.random()]]];
-			for (let i = 0; i < 5; i++) {
-				let a = [];
-				for (let j = 0; j < w*h+1; j++) {
-					a.push(Math.random());
-				}
-				weights[0].push(a);
-			}
-
-			let learning_data = [];
+		    var learning_data = []; 
 
 			function happy() {
-				learning_data.push([image, [1]]);
+				let d = [image, [1]];
+				learning_data.push(d);
+
+				image = [];
 
 				for (let i = 0; i < w * h; i++) {
-					image[i] = 0;
+					image.push(0);
 				}
+
+				h_s++;
+
+				console.log('веселых: ' + h_s + ", грустных: " + s_s);
 
 				draw();
 			}
 
 			function sad() {
-				learning_data.push([image, [0]]);
+				let d = [image, [0]];
+				learning_data.push(d);
+
+				image = [];
 
 				for (let i = 0; i < w * h; i++) {
-					image[i] = 0;
+					image.push(0);
 				}
+
+				s_s++;
+
+				console.log('веселых: ' + h_s + ", грустных: " + s_s);
 
 				draw();
 			}
 
 			function tr() {
-				learn(lays, weights, learning_data, 10000, 1);
+				n.learn(learning_data);
 			}
 
 			function r() {
-				//alert(run(lays, weights, image)>0.5?'happy':'sad');
-				alert(run(lays, weights, image));
+				let res = n.run(image);
+				alert(res > 0.5 ? 'веселый' : 'грустный');
 
 				for (let i = 0; i < w * h; i++) {
 					image[i] = 0;
