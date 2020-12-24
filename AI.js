@@ -122,4 +122,44 @@ class NeuralNetwork {
   learn(ld, k=null, i=null) {
     learn(this.lays, this.weights, ld, i, k);
   }
+
+  save(filename) {
+    let text = "";
+
+    for (let i = 0; i < this.weights.length; i++) {
+      let l = "";
+      for (let j = 0; j < this.weights[i].length; j++) {
+        let a = this.weights[i][j];
+        if (j < this.weights[i].length-1)
+          a += 'en'
+        l += a
+      }
+      if (i < this.weights.length-1)
+        l += 'el'
+      text += l;
+    }
+
+    SaveFile(filename, text);
+  }
+
+  load(filename) {
+    let file = new Text();
+    ReadFile(filename, file);
+    while (!file.innerHtml) {};
+    file = file.innerHtml.split('el');
+
+    for (let i = 0; i < file.length; i++) {
+      let a = file[i].split('en');
+      for (let j = 0; j < a.length; j++) {
+        let b = a[j].split(',');
+        for (let k = 0; k < b.length; k++) {
+          b[k] = parseFloat(b[k]);
+        }
+        a[j] = b;
+      }
+      file[i] = a;
+    }
+
+    this.weights = file;
+  }
 }

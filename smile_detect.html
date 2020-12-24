@@ -3,6 +3,7 @@
 	<head>
 		<title>Smile Detect</title>
 		<script src='AI.js'></script>
+		<script src='file.js'></script>
 		<style>
 			body {
 				background-color: black;
@@ -20,12 +21,14 @@
 		<button onclick="sad()">грустный</button>
 		<button onclick="tr()">обучить</button>
 		<button onclick="r()">запуск</button>
+		<button onclick="save()">сохранить</button>
+		<button onclick="load()">загрузить</button>
 		<script type="text/javascript">
 			var cnv = document.getElementById('cnv');
 			var ctx = cnv.getContext('2d');
 
-			var w = 30;
-			var h = 30;
+			var w = 15;
+			var h = 15;
 
 			var cw = cnv.width / w;
 			var ch = cnv.width / h;
@@ -129,7 +132,7 @@
 			}
 
 			function tr() {
-				n.learn(learning_data);
+				n.learn(learning_data, 0.1, 100000);
 			}
 
 			function r() {
@@ -141,6 +144,14 @@
 				}
 
 				draw();
+			}
+
+			function load() {
+				n.load('ai.ai');
+			}
+
+			function save() {
+				n.save('ai.ai');
 			}
 		</script>
 	</body>
