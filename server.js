@@ -5,6 +5,14 @@ app.get('/', function(request, response){
     response.sendFile(__dirname + '/smile_detect.html');
 });
 
+app.get('/color_detect.html', function(request, response){
+    response.sendFile(__dirname + '/color_detect.html');
+});
+
+app.get('/smile_detect.html', function(request, response){
+    response.sendFile(__dirname + '/smile_detect.html');
+});
+
 app.get('/AI.js', function(request, response){
     response.sendFile(__dirname + '/AI.js');
 });
@@ -17,4 +25,4 @@ app.get('/ai.ai', function(request, response){
     response.sendFile(__dirname + '/ai.ai');
 });
 
-app.listen(8080);
+app.listen(8000);

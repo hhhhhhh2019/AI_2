@@ -9,26 +9,47 @@
 				background-color: black;
 			}
 
+			* {
+				user-select: none;
+			}
+
 			canvas {
 				background-color: white;
+				margin-top: 5;
+			}
+
+			button {
+				font-size: large;
+			}
+			
+			p {
+				color:white;
 			}
 		</style>
 	</head>
 
 	<body>
-		<canvas width='300' height='300' id='cnv' onmousedown="on_mouse_down(event)" onmouseup="on_mouse_up(event)" onmousemove="on_mouse_move(event)"></canvas>
 		<button onclick="happy()">веселый</button>
 		<button onclick="sad()">грустный</button>
 		<button onclick="tr()">обучить</button>
 		<button onclick="r()">запуск</button>
 		<button onclick="save()">сохранить</button>
 		<button onclick="load()">загрузить</button>
+		<button onclick="clear_image()">отчистить</button>
+		<br>
+		<canvas width='300' height='300' id='cnv' onmouseout="on_mouse_up(event)" onmousedown="on_mouse_down(event)" onmouseup="on_mouse_up(event)" onmousemove="on_mouse_move(event)"></canvas>
+		<br>
+		<p id='happy'>веселых: 0</p>
+		<p id='sad'>грустных: 0</p>
 		<script type="text/javascript">
 			var cnv = document.getElementById('cnv');
 			var ctx = cnv.getContext('2d');
+			
+			var hap = document.getElementById('happy');
+			var sad = document.getElementById('sad');
 
-			var w = 15;
-			var h = 15;
+			var w = 10;
+			var h = 10;
 
 			var cw = cnv.width / w;
 			var ch = cnv.width / h;
@@ -52,7 +73,7 @@
 
 			function on_mouse_down(e) {
 				is_mouse_down = true;
-				let pos = rast(e.pageX - cw, e.pageY - ch);
+				let pos = rast(e.offsetX - cw / 2, e.offsetY - ch / 2);
 
 				cl = image[pos[1] * w + pos[0]];
 
@@ -70,7 +91,7 @@
 
 			function on_mouse_move(e) {
 				if (is_mouse_down) {
-					let pos = rast(e.pageX - cw, e.pageY - ch);
+					let pos = rast(e.offsetX - cw / 2, e.offsetY - ch / 2);
 					if (cl)
 						image[pos[1] * w + pos[0]] = 0;
 					else
@@ -93,12 +114,12 @@
 			}
 
 
-			let n = new NeuralNetwork([w*h, 10, 5, 1]);
+			let n = new NeuralNetwork([w*h, 10, 5, 1], "sigmoid");
 
 		    var learning_data = []; 
 
 			function happy() {
-				let d = [image, [1]];
+				let d = {"input": image, "output": [1]};
 				learning_data.push(d);
 
 				image = [];
@@ -109,13 +130,14 @@
 
 				h_s++;
 
-				console.log('веселых: ' + h_s + ", грустных: " + s_s);
+				hap.innerHTML = 'веселых: ' + h_s;
+				sad.innerHTML = 'грустных: ' + s_s;
 
 				draw();
 			}
 
 			function sad() {
-				let d = [image, [0]];
+				let d = {"input": image, "output": [0]};
 				learning_data.push(d);
 
 				image = [];
@@ -132,11 +154,18 @@
 			}
 
 			function tr() {
-				n.learn(learning_data);
+				console.log(n.learn(learning_data, {
+					"log": true,
+					"iterations": 1000000,
+					"learn rate": 0.5
+				}));
+				alert("обучение завершено");
 			}
 
 			function r() {
-				let res = n.run(image);
+				console.log(image);
+				let res = n.run(image)[0];
+				console.log(res); 
 				alert(res > 0.5 ? 'веселый' : 'грустный');
 
 				for (let i = 0; i < w * h; i++) {
@@ -152,6 +181,14 @@
 
 			function save() {
 				n.save('ai.ai');
+			}
+
+			function clear_image() {
+				for (let i = 0; i < w * h; i++) {
+					image[i] = 0;
+				}
+
+				draw();
 			}
 		</script>
 	</body>

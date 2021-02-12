@@ -1,154 +1,182 @@
-function activate1(weight) {
-  return Math.max(0, weight);
+'use strict'
+
+function activate1(x) {
+  return 1 / (1 + Math.exp(-x));
 }
 
-function measure1(weight, delta) {
-  if (weight <= 0) {
-    return 0;
+function measure1(x, y, e) {
+	return e * y * (1 - y) * x;
+}
+
+function activate2(x) {
+	if (x > 1) return 1 + 0.01 * (x - 1)
+	if (x < 0) return 0.01 * x;
+	if (0 <= x && x <= 1) return x;
+}
+
+function measure2(x, y, e) {
+	let a = 0;
+	if (x > 1 || x < 0) {a = 0.01}
+	else {a = 1}
+	return x * y * e * a;
+}
+
+let _types = Object.freeze({
+  "sigmoid": {
+    activate: activate1,
+    measure: measure1
+  },
+  "relu": {
+    activate: activate2,
+    measure: measure2
   }
+})
 
-  return delta;
+function count_lay(l0, l1, w, type) {
+	for (let i = 0; i < l1.length; i++) {
+		l1[i][0] = 0;
+		for (let j = 0; j < l0.length; j++) {
+			l1[i][0] += l0[j][0] * w[i][j];
+		}
+		l1[i][0] = _types[type].activate(l1[i][0]);
+	}
 }
-
-function activate2(value) {
-  return 1 / (1 + Math.exp(value));
-}
-
-function measure2(weight, error) {
-  return weight * (1 - weight) * error;
-}
-
-var relu = Object.freeze({
-  activate: activate1,
-  measure: measure1
-});
-
-var sigmoid = Object.freeze({
-  activate: activate2,
-  measure: measure2
-});
-
-var t = sigmoid;
-
-function count_lay(l0, l1, w) {
-  for (let i = 0; i < w.length; i++) {
-    l1[i][0] = 0;
-    for (let j = 0; j < w[i].length-1; j++) {
-      l1[i][0] += l0[j][0] * w[i][j];
-    }
-    l1[i][0] = t.activate(l1[i][0]);
-  }
-}
-
 
 function find_out_error(l, v) {
-  for (let i = 0; i < l.length; i++) {
-    l[i][1] = (v[i] - l[i][0]) * l[i][0] * (1 - l[i][0]);
-  }
+	for (let i = 0; i < l.length; i++) {
+		l[i][1] = v[i] - l[i][0];
+	}
 }
-
 
 function find_error(l0, l1, w) {
-  for (let i = 0; i < l0.length; i++) {
-    l0[i][1] = 0;
-    for (let j = 0; j < l1.length; j++) {
-      l0[i][1] += w[j][i] * l1[j][1];
-    }
-  }
+	for (let i = 0; i < l0.length; i++) {
+		l0[i][1] = 0;
+		for (let j = 0; j < l1.length; j++) {
+			l0[i][1] += l1[j][1] * w[j][i];
+		}
+	}
 }
 
-
-function correct_weights(l0, l1, w, k) {
-  for (let i = 0; i < w.length; i++) {
-    for (let j = 0; j < w[i].length-1; j++) {
-      w[i][j] += k * t.measure(w[i][j], l1[i][1]);
-    }
-  }
-} 
-
-function learn(lays, weights, ld, iters, koof) {
-  iters = iters || 100000;
-  koof =  koof || 0.1;
-
-
-  for (let k = 0; k < iters; k++) {
-    for (let d = 0; d < ld.length; d++) {
-      for (let i = 0; i < ld[d][0].length; i++) {
-        lays[0][i][0] = ld[d][0][i];
-      }
-      
-      for (let i = 1; i < lays.length; i++) {
-        count_lay(lays[i-1], lays[i], weights[i-1]);
-      }
-
-      find_out_error(lays[lays.length-1], ld[d][1]);
-      for (let i = 1; i < lays.length; i++) {
-        let id = lays.length - i;
-        find_error(lays[id-1], lays[id], weights[id-1]);
-      }
-
-      for (let i = 1; i < lays.length; i++) {
-        correct_weights(lays[i - 1], lays[i], weights[i - 1], koof);
-      }
-    }
-  }
-
-  alert('finished');
+function correct_error(l0, l1, w, k, type) {
+	for (let i = 0; i < w.length; i++) {
+		for (let j = 0; j < w[i].length; j++) {
+			w[i][j] += k * _types[type].measure(l0[j][0], l1[i][0], l1[i][1]);
+		}
+	}
 }
 
-function run(lays, weights, data) {
-  for (let i = 0; i < lays[0].length; i++) {
-    lays[0][i][0] = data[i];
-  }
-  
-  for (let i = 1; i < lays.length; i++) {
-    count_lay(lays[i-1], lays[i], weights[i-1]);
-  }
-  
-  res = [];
-  for (let i of lays[lays.length-1]) {
-    res.push(i[0]);
-  }
+function _run(lays, weights, data, type) {
+	for (let i = 0; i < data.length; i++) {
+		lays[0][i][0] = data[i];
+	}
 
-  return res;
+	for (let i = 0; i < lays.length - 1; i++) {
+		count_lay(lays[i], lays[i+1], weights[i], type);
+	}
+
+	let res = [];
+	for (let i of lays[lays.length-1]) {
+		res.push(i[0]);
+	}
+
+	return res;
+}
+
+function get_error(lays) {
+	let e = 0;
+
+	for (let i of lays) {
+		for (let n of i) {
+			e += Math.abs(n[1]);
+		}
+	}
+
+	return e;
+}
+
+function _learn(lays, weights, ld, type, iters, koof, log, logp) {
+	let errors = [];
+
+	for (let k = 0; k < iters; k++) {
+		for (let d of ld) {
+			_run(lays, weights, d["input"], type);
+
+			find_out_error(lays[lays.length-1], d["output"]);
+			for (let i = lays.length-1; i > 1; i--) {
+				find_error(lays[i-1], lays[i], weights[i-1]);
+			}
+
+			errors.push(get_error(lays));
+			let e = 0;
+			for (let i of lays[lays.length-1]) {
+				e += Math.abs(i[1]);
+			}
+			if (e < 0.01) continue;
+
+			for (let i = 0; i < lays.length-1; i++) {
+				correct_error(lays[i], lays[i+1], weights[i], koof, type);
+			}
+		}
+
+		if (log && k % logp == 0) console.log("осталось: ", iters - k);
+	}
+
+	return errors;
 }
 
 
 class NeuralNetwork {
-  constructor(nc) {
-    this.lays = [];
-    for (let i of nc) {
-      let l = [];
-      for (let j = 0; j < i; j++) {
-        l.push([0, 0]);
-      }
-      this.lays.push(l);
-    }
-      [
-        [[]]
-      ]
-    this.weights = [];
-    for (let i = 1; i < nc.length; i++) {
-      let _w = [];
-      for (let j = 0; j < nc[i]; j++) {
-        let a = [];
-        for (let k = 0; k < nc[i-1]; k++) {
-            a.push(Math.random());
-        }
-        _w.push(a);
-      }
-      this.weights.push(_w);
-    }
-  }
+	constructor(nc, type="sigmoid") {
+    this.type = type;
 
-  run(data) {
-    return run(this.lays, this.weights, data);
-  }
+		this.lays = [];
+		for (let i of nc) {
+			let l = [];
+			for (let j = 0; j < i; j++) {
+				l.push([0, 0]);
+			}
+			this.lays.push(l);
+		}
 
-  learn(ld, k=null, i=null) {
-    learn(this.lays, this.weights, ld, i, k);
-  }
+		this.weights = [];
+		for (let i = 1; i < nc.length; i++) {
+			let l = [];
+			for (let j = 0; j < nc[i]; j++) {
+				let w = [];
+				for (let k = 0; k < nc[i-1]; k++) {
+					w.push(Math.random()*2-1);
+				}
+				l.push(w);
+			}
+			this.weights.push(l);
+		}
+	}
 
+	run(data) {
+		return _run(this.lays, this.weights, data, this.type);
+	}
+
+	learn(ld, params) {
+		let [i, k, l, lp] = [10000, 0.5, false, 100];
+		if (params) {
+			if (params.hasOwnProperty("iterarions")) i = params["iterations"];
+			if (params.hasOwnProperty("log")) l = params["log"];
+			if (params.hasOwnProperty("learn rate")) k = params["learn rate"];
+			if (params.hasOwnProperty("log period")) lp = params["log period"];
+		}
+		return _learn(this.lays, this.weights, ld, this.type, i, k, l, lp);
+	}
+
+	evolution(p) {
+		for (let i = 0; i < this.weights.length; i++) {
+			for (let j = 0; j < this.weights[i].length; j++) {
+				for (let k = 0; k < this.weights[i][j].length; k++) {
+					this.weights[i][j][k] = p.weights[i][j][k] + (Math.random()-0.5)/3;
+				}
+			}
+		}
+  }
+  
   save(filename) {
     let text = "";
 
