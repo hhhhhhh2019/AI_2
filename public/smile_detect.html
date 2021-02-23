@@ -1,0 +1,195 @@
+<html>
+
+	<head>
+		<title>Smile Detect</title>
+		<script src='AI.js'></script>
+		<script src='file.js'></script>
+		<style>
+			body {
+				background-color: black;
+			}
+
+			* {
+				user-select: none;
+			}
+
+			canvas {
+				background-color: white;
+				margin-top: 5;
+			}
+
+			button {
+				font-size: large;
+			}
+			
+			p {
+				color:white;
+			}
+		</style>
+	</head>
+
+	<body>
+		<button onclick="happy()">веселый</button>
+		<button onclick="sad()">грустный</button>
+		<button onclick="tr()">обучить</button>
+		<button onclick="r()">запуск</button>
+		<button onclick="save()">сохранить</button>
+		<button onclick="load()">загрузить</button>
+		<button onclick="clear_image()">отчистить</button>
+		<br>
+		<canvas width='300' height='300' id='cnv' onmouseout="on_mouse_up(event)" onmousedown="on_mouse_down(event)" onmouseup="on_mouse_up(event)" onmousemove="on_mouse_move(event)"></canvas>
+		<br>
+		<p id='happy'>веселых: 0</p>
+		<p id='sad'>грустных: 0</p>
+		<script type="text/javascript">
+			var cnv = document.getElementById('cnv');
+			var ctx = cnv.getContext('2d');
+			
+			var happ = document.getElementById('happy');
+			var sadp = document.getElementById('sad');
+
+			var w = 10;
+			var h = 10;
+
+			var cw = cnv.width / w;
+			var ch = cnv.width / h;
+
+			var is_mouse_down = false;
+
+			var image = [];
+
+			var h_s = 0;
+			var s_s = 0;
+
+			var cl = false;
+
+			for (let i = 0; i < w * h; i++) {
+				image.push(0);
+			}
+
+			function rast(x, y) {
+				return [Math.max(0, Math.round(x / cw)), Math.max(0, Math.round(y / ch))];
+			}
+
+			function on_mouse_down(e) {
+				is_mouse_down = true;
+				let pos = rast(e.offsetX - cw / 2, e.offsetY - ch / 2);
+
+				cl = image[pos[1] * w + pos[0]];
+
+				if (cl)
+					image[pos[1] * w + pos[0]] = 0;
+				else
+					image[pos[1] * w + pos[0]] = 1;
+
+				draw();
+			}
+
+			function on_mouse_up(e) {
+				is_mouse_down = false;
+			}
+
+			function on_mouse_move(e) {
+				if (is_mouse_down) {
+					let pos = rast(e.offsetX - cw / 2, e.offsetY - ch / 2);
+					if (cl)
+						image[pos[1] * w + pos[0]] = 0;
+					else
+						image[pos[1] * w + pos[0]] = 1;
+				}
+
+				draw();
+			}
+
+			function draw() {
+				ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+				for (let i = 0; i < h; i++) {
+					for (let j = 0; j < w; j++) {
+						if (image[i*w+j] == 1) {
+							ctx.fillRect(j * cw, i * ch, cw, ch)
+						}
+					}
+				}
+			}
+
+
+			let n = new NeuralNetwork([w*h, 10, 5, 1], "sigmoid");
+
+		    var learning_data = []; 
+
+			function happy() {
+				let d = {"input": image, "output": [1]};
+				learning_data.push(d);
+
+				image = [];
+
+				for (let i = 0; i < w * h; i++) {
+					image.push(0);
+				}
+
+				h_s++;
+
+				happ.innerHTML = 'веселых: ' + h_s;
+
+				draw();
+			}
+
+			function sad() {
+				let d = {"input": image, "output": [0]};
+				learning_data.push(d);
+
+				image = [];
+
+				for (let i = 0; i < w * h; i++) {
+					image.push(0);
+				}
+
+				s_s++;
+
+				sadp.innerHTML = 'грустных: ' + s_s;
+
+				draw();
+			}
+
+			function tr() {
+				n.learn(learning_data, {
+					"log": true,
+					"iterations": 1000000,
+					"learn rate": 0.5
+				});
+				alert("обучение завершено");
+			}
+
+			function r() {
+				console.log(image);
+				let res = n.run(image)[0];
+				console.log(res); 
+				alert(res > 0.5 ? 'веселый' : 'грустный');
+
+				for (let i = 0; i < w * h; i++) {
+					image[i] = 0;
+				}
+
+				draw();
+			}
+
+			function load() {
+				n.load('ai.ai');
+			}
+
+			function save() {
+				n.save('ai.ai');
+			}
+
+			function clear_image() {
+				for (let i = 0; i < w * h; i++) {
+					image[i] = 0;
+				}
+
+				draw();
+			}
+		</script>
+	</body>
+
+</html>
