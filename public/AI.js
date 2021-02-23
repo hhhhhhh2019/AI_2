@@ -159,7 +159,7 @@ class NeuralNetwork {
 	learn(ld, params) {
 		let [i, k, l, lp] = [10000, 0.5, false, 100];
 		if (params) {
-			if (params.hasOwnProperty("iterarions")) i = params["iterations"];
+			if (params.hasOwnProperty("iterations")) i = params["iterations"];
 			if (params.hasOwnProperty("log")) l = params["log"];
 			if (params.hasOwnProperty("learn rate")) k = params["learn rate"];
 			if (params.hasOwnProperty("log period")) lp = params["log period"];

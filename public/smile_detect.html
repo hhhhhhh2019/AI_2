@@ -52,7 +52,7 @@
 			var h = 10;
 
 			var cw = cnv.width / w;
-			var ch = cnv.width / h;
+			var ch = cnv.height / h;
 
 			var is_mouse_down = false;
 
@@ -155,16 +155,14 @@
 			function tr() {
 				n.learn(learning_data, {
 					"log": true,
-					"iterations": 1000000,
+					"iterations": 10000,
 					"learn rate": 0.5
 				});
 				alert("обучение завершено");
 			}
 
 			function r() {
-				console.log(image);
 				let res = n.run(image)[0];
-				console.log(res); 
 				alert(res > 0.5 ? 'веселый' : 'грустный');
 
 				for (let i = 0; i < w * h; i++) {
