@@ -18,7 +18,7 @@ var Request;
     }
 })()
 
-function SendRequest(method, args, path, handler) {
+function SendRequest(method, args, path, handler, asinc=false) {
 	if (!Request) {
         return;
     }
@@ -30,9 +30,9 @@ function SendRequest(method, args, path, handler) {
     }
     
     if (method.toLowerCase() == "get" && args.length > 0)
-    path += "?" + args;
+        path += "?" + args;
     
-    Request.open(method, path, false);
+    Request.open(method, path, asinc);
     
     if (method.toLowerCase() == "post") {
         Request.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=utf-8");
@@ -44,12 +44,15 @@ function SendRequest(method, args, path, handler) {
 }
 
 function SaveFile(filename, text) {
-	console.save(filename, text);
+    let Handler = function(Request) {
+		alert('сохранено');
+    }
+    SendRequest("POST", "name="+filename+"&text="+text, "http://localhost:8000/save", Handler, true);
 }
 
 function ReadFile(filename, container) {
-	var Handler = function(Request) {
-		alert('ready');
+	let Handler = function(Request) {
+		alert('загружено');
 		container.innerHtml = Request.response;
     }
     

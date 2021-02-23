@@ -36,6 +36,7 @@
 		<button onclick="save()">сохранить</button>
 		<button onclick="load()">загрузить</button>
 		<button onclick="clear_image()">отчистить</button>
+		<button onclick="save_data()">сохранить данные обучения</button>
 		<br>
 		<canvas width='300' height='300' id='cnv' onmouseout="on_mouse_up(event)" onmousedown="on_mouse_down(event)" onmouseup="on_mouse_up(event)" onmousemove="on_mouse_move(event)"></canvas>
 		<br>
@@ -175,7 +176,7 @@
 			function load() {
 				n.load('ai.ai');
 			}
-
+			
 			function save() {
 				n.save('ai.ai');
 			}
@@ -186,6 +187,11 @@
 				}
 
 				draw();
+			}
+
+			function save_data() {
+				let sd = JSON.stringify(learning_data);
+				SaveFile("public/data.dat", sd);
 			}
 		</script>
 	</body>
